@@ -51,12 +51,18 @@
   .coming-soon {
     display: flex;
     justify-content: center;
-    gap: 0.1em;
+    gap: 0.5em;
     flex-wrap: wrap;
     padding: 0 1rem;
   }
 
-  .coming-soon span {
+  .word {
+    display: inline-flex;
+    white-space: nowrap;
+    gap: 0.1em;
+  }
+
+  .word > span {
     font-size: clamp(1.5rem, 6vw, 5rem);
     display: inline-block;
     animation:
@@ -97,7 +103,7 @@
 
   .pixel-border {
     position: relative;
-    padding: 2rem 3rem;
+    padding: 2rem clamp(1rem, 4vw, 3rem);
     border: 4px solid;
     border-image: repeating-linear-gradient(
       90deg, #f0f, #0ff, #ff0, #0f0, #f0f
@@ -194,11 +200,21 @@
 // Animated letter spans
 const text = "COMING SOON!";
 const container = document.getElementById('comingSoon');
-text.split('').forEach((char, i) => {
-  const span = document.createElement('span');
-  span.textContent = char === ' ' ? '\u00A0' : char;
-  span.style.animationDelay = `${i * 0.08}s, ${i * 0.2}s, ${i * 0.5}s`;
-  container.appendChild(span);
+const words = text.split(' ');
+let charIndex = 0;
+words.forEach((word, wi) => {
+  const wordWrap = document.createElement('span');
+  wordWrap.className = 'word';
+  word.split('').forEach((char) => {
+    const span = document.createElement('span');
+    span.textContent = char;
+    span.style.animationDelay = `${charIndex * 0.08}s, ${charIndex * 0.2}s, ${charIndex * 0.5}s`;
+    wordWrap.appendChild(span);
+    charIndex++;
+  });
+  container.appendChild(wordWrap);
+  // account for the space character index
+  if (wi < words.length - 1) charIndex++;
 });
 
 // Psychedelic pixel background
