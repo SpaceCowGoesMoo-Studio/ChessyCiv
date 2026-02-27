@@ -1,1 +1,1 @@
-# civchess
+# ChessyCiv
