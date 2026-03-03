@@ -221,7 +221,7 @@ UIController.prototype._createHtpOverviewPage = function() {
         'ChessyCiv is a turn-based strategy game where chess civilizations clash on a ' +
         '<span style="color:#00d4ff;">10\u00d710 grid</span>. ' +
         'Build cities, train warriors, send settlers to expand, and conquer your opponents.<br><br>' +
-        'Drag pieces to move them. Tap cities to produce units.';
+        'Drag pieces, or tap to select and move them. Tap on a city, then on "Production" to choose what to build.';
     page.appendChild(intro);
 
     var piecesContainer = document.createElement('div');
@@ -229,8 +229,8 @@ UIController.prototype._createHtpOverviewPage = function() {
 
     var pieces = [
         { symbol: '\u265C', name: 'City', color: '#00ffff', desc: 'Immovable. Produces warriors, settlers, and technology. Starts with 4 HP. Tap a city to choose what to build.' },
-        { symbol: '\u265F', name: 'Warrior', color: '#ff00ff', desc: 'Moves 1 tile in any direction. Attacks enemies and claims territory. Your main fighting force.' },
-        { symbol: '\u265E', name: 'Settler', color: '#00ff00', desc: 'Moves up to 3 tiles (up, down, left, and right only). Founds a new city on arrival. Must be at least 1 tile between existing cities.' }
+        { symbol: '\u265F', name: 'Warrior', color: '#ff00ff', desc: 'Moves 1 tile in any direction. Attacks enemies and steals territory. Your main fighting force.' },
+        { symbol: '\u265E', name: 'Settler', color: '#00ff00', desc: 'Moves up to 3 tiles (up, down, left, and right only). Can found a new city on arrival to a valid tile. Must be at least 1 tile between existing cities.' }
     ];
 
     pieces.forEach(function(p) {
@@ -295,9 +295,9 @@ UIController.prototype._createHtpProductionPage = function() {
     page.appendChild(subtitle);
 
     var productions = [
-        { name: 'Warrior',       turns: 4,  icon: '\u265F', desc: 'Trains a warrior unit. Warriors move 1 tile per turn in any direction, attack enemies, and claim territory for your civilization.' },
+        { name: 'Warrior',       turns: 4,  icon: '\u265F', desc: 'Trains a warrior unit. Warriors move 1 tile per turn in any direction, attack enemies, and steal territory for your civilization.' },
         { name: 'Settler',       turns: 6,  icon: '\u265E', desc: 'Trains a settler unit. Settlers move up to 3 tiles orthogonally (up, down, left, right) per turn and can found a new city (must have 1 tile of space between cities).' },
-        { name: 'Diplomacy',     turns: 4,  icon: '\u2694', desc: 'Claims an unowned tile adjacent to the city as yours. It steals territory and any cities on it if there are no free tiles left.' },
+        { name: 'Diplomacy',     turns: 4,  icon: '\u2694', desc: 'Claims an unowned tile adjacent to the city\'s borders as yours. It steals territory and any cities on it if there are no free tiles left.' },
         { name: 'Science',       turns: 10, icon: '\u2699', desc: 'Researches technology. Increases your tech score, which boosts warrior damage and city health.' },
         { name: 'Repair',        turns: 1,  icon: '\u2692', desc: 'Restores 1 HP to the city. Only available when the city is damaged. Fast, single-turn production.' },
         { name: 'Heal Warriors', turns: 2,  icon: '\u2764', desc: 'Heals all friendly warriors adjacent to this city by 1 HP. Only available when wounded warriors are nearby.' }
@@ -362,7 +362,7 @@ UIController.prototype._createHtpMechanicsPage = function() {
 
     page.appendChild(this._createHtpMechanicSection(
         'Tile Conquest',
-        'Moving a warrior onto a tile claims it for your civilization if you are at war with the owner. Territory expands as your warriors advance. ',
+        'Moving a warrior onto another player\'s tile steals it if you are at war with the owner. Territory expands as your warriors advance move through their land. ',
         this._createTileConquestAnim.bind(this)
     ));
 
