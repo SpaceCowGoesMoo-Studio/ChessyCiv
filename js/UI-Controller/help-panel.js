@@ -351,6 +351,7 @@ UIController.prototype.toggleHelpPanel = function() {
         }, { once: true });
 
         this.helpOverlay.style.display = 'flex';
+        this._helpSectionBlockedUntil = Date.now() + 300;
         this.showHelpMainView();
 
         // Attach keyboard listener for panic
@@ -398,6 +399,7 @@ UIController.prototype.showHelpMainView = function() {
  * Show a specific section view, hide main and other sections.
  */
 UIController.prototype.showHelpSection = function(sectionId) {
+    if (this._helpSectionBlockedUntil && Date.now() < this._helpSectionBlockedUntil) return;
     this.helpMainView.style.display = 'none';
     Object.entries(this._helpSections).forEach(([id, sec]) => {
         sec.el.style.display = id === sectionId ? 'flex' : 'none';
