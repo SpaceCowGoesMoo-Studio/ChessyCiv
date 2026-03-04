@@ -10,7 +10,7 @@ class MenuScene {
         this.humanPlayers = 1;
         this.aiPlayers = 1;
         this.selectedDifficulty = AI_DIFFICULTY.MEDIUM;
-        this.randomStart = true;
+        this.randomStart = false;
         this.showingMainMenu = true;
         this.mainMenuElements = [];
         this.newGameMenuElements = [];
@@ -89,7 +89,7 @@ class MenuScene {
         this.humanPlayers = 1;
         this.aiPlayers = 1;
         this.selectedDifficulty = AI_DIFFICULTY.MEDIUM;
-        this.randomStart = true;
+        this.randomStart = false;
         this.showingMainMenu = true;
         this._aiOnlyMode = false;
         this.newGameMenuElements = [];

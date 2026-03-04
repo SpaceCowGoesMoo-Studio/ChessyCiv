@@ -374,7 +374,7 @@ achievementManager.addCheck('victory', function(data, engine, mgr) {
     if (aiCount > 0 && diffCounts.easy === aiCount) {
         mgr.unlock('win_easy');
     }
-    if (aiCount > 0 && (diffCounts.medium + diffCounts.hard) === aiCount) {
+    if (aiCount > 0 && diffCounts.medium === aiCount) {
         mgr.unlock('win_medium');
     }
     if (aiCount > 0 && diffCounts.hard === aiCount) {
@@ -385,7 +385,7 @@ achievementManager.addCheck('victory', function(data, engine, mgr) {
     if (aiCount >= 3 && diffCounts.easy === aiCount) {
         mgr.unlock('win_easy_v3');
     }
-    if (aiCount >= 3 && (diffCounts.medium + diffCounts.hard) === aiCount) {
+    if (aiCount >= 3 && diffCounts.medium === aiCount) {
         mgr.unlock('win_medium_v3');
     }
     if (aiCount >= 3 && diffCounts.hard === aiCount) {

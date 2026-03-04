@@ -97,7 +97,7 @@ class GameScene {
     init(data) {
         data = data || {};
         this.playerConfigs = data.playerConfigs || null;
-        this.randomStart = data.randomStart !== false; // default true
+        this.randomStart = data.randomStart === true; // default false
         this.savedGame = data.savedGame || null;
         this.levelData = data.levelData || null;
         this.scenarioIndex = data.scenarioIndex != null ? data.scenarioIndex : null;
