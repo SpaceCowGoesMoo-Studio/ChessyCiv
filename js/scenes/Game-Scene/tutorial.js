@@ -1572,6 +1572,27 @@ GameScene.prototype._showTimedHint = function(msg, duration, onDone, dialColor) 
     toast._msgEl.innerHTML = msg.replace(/\n/g, '<br>');
     this._adjustTutorialToastForPiece(toast, this._getHumanPiece(PIECE_TYPES.CITY));
 
+    // Add X dismiss button to header (matching relations popup style)
+    const header = toast._headerEl;
+    header.style.position = 'relative';
+    header.textContent = '';
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = '// HINT \\\\';
+    header.appendChild(titleSpan);
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.textContent = 'X';
+    closeBtn.style.cssText =
+        'position:absolute;right:0;top:50%;transform:translateY(-50%);' +
+        'font-family:VT323,monospace;font-size:24px;color:#00d4ff;' +
+        'background:transparent;border:none;cursor:pointer;' +
+        'padding:4px 10px;line-height:1;outline:none;pointer-events:auto;';
+    if (window.matchMedia('(hover: hover)').matches) {
+        closeBtn.addEventListener('mouseenter', function() { closeBtn.style.color = '#ff4444'; });
+        closeBtn.addEventListener('mouseleave', function() { closeBtn.style.color = '#00d4ff'; });
+    }
+    header.appendChild(closeBtn);
+
     // 8-bit countdown dial — centred below the toast box
     if (typeof _makeTimeDial === 'function') {
         var color = dialColor || '#00d4ff';
@@ -1584,12 +1605,24 @@ GameScene.prototype._showTimedHint = function(msg, duration, onDone, dialColor) 
     }
 
     const scene = this;
-    scene.delayedCall(duration, function() {
+    var dismissed = false;
+    function dismissHint() {
+        if (dismissed) return;
+        dismissed = true;
+        clearTimeout(timerId);
+        var idx = scene._timers.indexOf(timerId);
+        if (idx !== -1) scene._timers.splice(idx, 1);
         toast.style.transition = 'opacity 0.4s';
         toast.style.opacity = '0';
         setTimeout(function() {
             if (toast.parentNode) toast.parentNode.removeChild(toast);
             if (typeof onDone === 'function') onDone();
         }, 450);
+    }
+    closeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (scene.playClickSound) scene.playClickSound();
+        dismissHint();
     });
+    var timerId = scene.delayedCall(duration, dismissHint);
 };
