@@ -147,6 +147,11 @@ GameScene.prototype.drawOwnership = function (force) {
     if (this._lastHighlightMoves) {
         this._renderHighlightRects(this._lastHighlightMoves);
     }
+
+    // 4. Restore settler valid-settle highlights (if any)
+    if (this._lastSettleHighlights) {
+        this._renderSettleHighlightRects(this._lastSettleHighlights);
+    }
 };
 
 // ============================================
@@ -244,22 +249,22 @@ GameScene.prototype.drawTerritoryBorders = function () {
             const rightN = c < BOARD_SIZE - 1  ? ownership[r][c + 1] : -1;
 
             if (topN !== owner) {
-                edges.push({ x1: x0, y1: y0, x2: x1, y2: y0, owner, neighbor: topN, horiz: true });
+                edges.push({ x1: x0, y1: y0, x2: x1, y2: y0, owner, neighbor: topN, horiz: true, row: r, col: c });
                 addCorner(x0, y0, owner, 'right');
                 addCorner(x1, y0, owner, 'left');
             }
             if (botN !== owner) {
-                edges.push({ x1: x0, y1: y1, x2: x1, y2: y1, owner, neighbor: botN, horiz: true });
+                edges.push({ x1: x0, y1: y1, x2: x1, y2: y1, owner, neighbor: botN, horiz: true, row: r, col: c });
                 addCorner(x0, y1, owner, 'right');
                 addCorner(x1, y1, owner, 'left');
             }
             if (leftN !== owner) {
-                edges.push({ x1: x0, y1: y0, x2: x0, y2: y1, owner, neighbor: leftN, horiz: false });
+                edges.push({ x1: x0, y1: y0, x2: x0, y2: y1, owner, neighbor: leftN, horiz: false, row: r, col: c });
                 addCorner(x0, y0, owner, 'down');
                 addCorner(x0, y1, owner, 'up');
             }
             if (rightN !== owner) {
-                edges.push({ x1: x1, y1: y0, x2: x1, y2: y1, owner, neighbor: rightN, horiz: false });
+                edges.push({ x1: x1, y1: y0, x2: x1, y2: y1, owner, neighbor: rightN, horiz: false, row: r, col: c });
                 addCorner(x1, y0, owner, 'down');
                 addCorner(x1, y1, owner, 'up');
             }
@@ -426,7 +431,7 @@ GameScene.prototype.drawTerritoryBorders = function () {
             const { ax1, ay1, ax2, ay2 } = adjustEdge(edge);
             const len = edge.horiz ? (ax2 - ax1) : (ay2 - ay1);
             if (len > 0) {
-                cached.push({ ax1, ay1, ax2, ay2, len, horiz: edge.horiz });
+                cached.push({ ax1, ay1, ax2, ay2, len, horiz: edge.horiz, row: edge.row, col: edge.col });
             }
         }
         if (cached.length > 0) {
@@ -533,13 +538,35 @@ GameScene.prototype._drawGlowAnimation = function (timestamp) {
     const D4 = DT[0], D3 = DT[1], D2 = DT[2], D1 = DT[3];
 
     // Reuse bucket arrays across frames (clear by resetting length)
-    if (!this._glowBucketPool) {
-        this._glowBucketPool = [[], [], [], []];
+    // Buckets 0-3: normal edges; 4-7: settle-tile edges (gold)
+    if (!this._glowBucketPool || this._glowBucketPool.length < 8) {
+        this._glowBucketPool = [[], [], [], [], [], [], [], []];
     }
     const pool = this._glowBucketPool;
 
     gCtx.save();
     gCtx.lineCap = 'round';
+
+    // Pre-compute gold glow RGBA strings (for settler selection mode)
+    if (!this._settleGlowRGBA) {
+        const MAX_ALPHA = 0.7;
+        this._settleGlowRGBA = [];
+        for (let i = 0; i < 4; i++) {
+            const a = ((i + 1) / 4) * MAX_ALPHA;
+            this._settleGlowRGBA.push('rgba(255,215,0,' + a + ')');
+        }
+    }
+
+    // Build per-tile settle set for per-edge gold coloring
+    const settleSet = new Set();
+    if (this._lastSettleHighlights && this.selectedPiece &&
+        this.selectedPiece.pieceData.type === PIECE_TYPES.SETTLER) {
+        for (let si = 0; si < this._lastSettleHighlights.length; si++) {
+            const t = this._lastSettleHighlights[si];
+            settleSet.add(t.row * BOARD_SIZE + t.col);
+        }
+    }
+    const hasSettleTiles = settleSet.size > 0;
 
     for (const [owner, ownerEdges] of this._cachedBorderEdges) {
         const rgbaStrs = this._cachedGlowRGBA ? this._cachedGlowRGBA.get(owner) : null;
@@ -553,11 +580,15 @@ GameScene.prototype._drawGlowAnimation = function (timestamp) {
         const phase = (timestamp % CYCLE_MS) / CYCLE_MS;
         const pulseCenter = phase * totalLen;
 
-        // Clear reusable buckets
+        // Clear reusable buckets (0-3 normal, 4-7 settle/gold)
         pool[0].length = 0;
         pool[1].length = 0;
         pool[2].length = 0;
         pool[3].length = 0;
+        pool[4].length = 0;
+        pool[5].length = 0;
+        pool[6].length = 0;
+        pool[7].length = 0;
 
         let dist = 0;
 
@@ -580,13 +611,14 @@ GameScene.prototype._drawGlowAnimation = function (timestamp) {
                 const bi = d < D4 ? 3 : d < D3 ? 2 : d < D2 ? 1 : 0;
 
                 const t0 = s / nSubs, t1 = (s + 1) / nSubs;
+                const bOff = (hasSettleTiles && settleSet.has(edge.row * BOARD_SIZE + edge.col)) ? 4 : 0;
                 if (edge.horiz) {
-                    pool[bi].push(
+                    pool[bi + bOff].push(
                         edge.ax1 + t0 * edge.len, edge.ay1,
                         edge.ax1 + t1 * edge.len, edge.ay1
                     );
                 } else {
-                    pool[bi].push(
+                    pool[bi + bOff].push(
                         edge.ax1, edge.ay1 + t0 * edge.len,
                         edge.ax1, edge.ay1 + t1 * edge.len
                     );
@@ -622,7 +654,7 @@ GameScene.prototype._drawGlowAnimation = function (timestamp) {
             dist += arcLen;
         }
 
-        // Draw batched by brightness level (pre-computed RGBA strings)
+        // Draw batched by brightness level — normal edges (player color)
         gCtx.lineWidth = GLOW_LW;
         for (let bi = 0; bi < 4; bi++) {
             const bucket = pool[bi];
@@ -650,6 +682,25 @@ GameScene.prototype._drawGlowAnimation = function (timestamp) {
                 }
             }
             gCtx.stroke();
+        }
+
+        // Draw settle-tile edges in gold (buckets 4-7)
+        if (hasSettleTiles) {
+            for (let bi = 0; bi < 4; bi++) {
+                const bucket = pool[bi + 4];
+                if (bucket.length === 0) continue;
+
+                gCtx.strokeStyle = this._settleGlowRGBA[bi];
+
+                gCtx.beginPath();
+                let i = 0;
+                while (i < bucket.length) {
+                    gCtx.moveTo(bucket[i], bucket[i + 1]);
+                    gCtx.lineTo(bucket[i + 2], bucket[i + 3]);
+                    i += 4;
+                }
+                gCtx.stroke();
+            }
         }
     }
 

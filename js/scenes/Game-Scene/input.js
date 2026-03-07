@@ -438,6 +438,9 @@ GameScene.prototype.selectPiece = function(sprite) {
     if (piece.ownerId === this.engine.currentPlayerIndex && piece.type !== PIECE_TYPES.CITY) {
         this.showValidMoves(piece);
     }
+    if (piece.ownerId === this.engine.currentPlayerIndex && piece.type === PIECE_TYPES.SETTLER) {
+        this.showSettleHighlights(piece);
+    }
 
     this.updateSelectedInfo();
 };
@@ -472,6 +475,14 @@ GameScene.prototype.showValidMoves = function(piece) {
     this._renderHighlightRects(moves);
 };
 
+GameScene.prototype.showSettleHighlights = function(settler) {
+    const tiles = this.engine.getValidSettleTiles(settler);
+    if (tiles.length === 0) return;
+
+    this._lastSettleHighlights = tiles;
+    this._renderSettleHighlightRects(tiles);
+};
+
 /**
  * Render highlight rectangles on the board canvas.
  * Does NOT call drawOwnership — the caller is responsible for ensuring the
@@ -499,8 +510,46 @@ GameScene.prototype._renderHighlightRects = function(moves) {
     ctx.restore();
 };
 
+/**
+ * Render gold border highlights on tiles where the settler can settle.
+ * Called from drawOwnership() to restore highlights after a board repaint.
+ */
+GameScene.prototype._renderSettleHighlightRects = function(tiles) {
+    PieceRenderCache.update();
+    const strokeWidth = Math.max(PieceRenderCache.strokeWidth + 1, 3);
+    const glowWidth = strokeWidth * 4;
+    const padding = Math.max(Math.floor(TILE_SIZE * 0.03), 1);
+    const innerSize = TILE_SIZE - padding * 2;
+
+    const ctx = this.boardCtx;
+    ctx.save();
+
+    // Glow pass — wide, semi-transparent
+    ctx.lineWidth = glowWidth;
+    ctx.strokeStyle = hexToRGBA(0xFFD700, 0.3);
+    for (let i = 0, len = tiles.length; i < len; i++) {
+        const tile = tiles[i];
+        const x = BOARD_OFFSET + tile.col * TILE_SIZE + padding;
+        const y = BOARD_OFFSET + tile.row * TILE_SIZE + padding;
+        ctx.strokeRect(x, y, innerSize, innerSize);
+    }
+
+    // Solid pass — crisp gold outline
+    ctx.lineWidth = strokeWidth;
+    ctx.strokeStyle = hexToRGBA(0xFFD700, 0.9);
+    for (let i = 0, len = tiles.length; i < len; i++) {
+        const tile = tiles[i];
+        const x = BOARD_OFFSET + tile.col * TILE_SIZE + padding;
+        const y = BOARD_OFFSET + tile.row * TILE_SIZE + padding;
+        ctx.strokeRect(x, y, innerSize, innerSize);
+    }
+
+    ctx.restore();
+};
+
 GameScene.prototype.clearHighlights = function() {
     this._lastHighlightMoves = null;
+    this._lastSettleHighlights = null;
     // Redraw board to remove highlight rectangles
     this.drawOwnership(true);
 };

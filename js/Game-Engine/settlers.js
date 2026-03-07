@@ -33,6 +33,41 @@ GameEngine.prototype.canSettlerBuildCity = function(settler) {
     return { valid: true };
 };
 
+/**
+ * Return all board tiles where the settler could legally settle right now.
+ * Used to highlight valid settle spots when the settler is selected.
+ * @param {Object} settler - The settler piece
+ * @returns {Array} Array of {row, col} objects
+ */
+GameEngine.prototype.getValidSettleTiles = function(settler) {
+    if (settler.type !== PIECE_TYPES.SETTLER) return [];
+    if (settler.hasMoved) return [];
+
+    // Pre-collect city positions for fast Chebyshev checks
+    const cities = [];
+    for (let i = 0; i < this.pieces.length; i++) {
+        if (this.pieces[i].type === PIECE_TYPES.CITY) cities.push(this.pieces[i]);
+    }
+
+    const validTiles = [];
+    for (let row = 0; row < BOARD_SIZE; row++) {
+        for (let col = 0; col < BOARD_SIZE; col++) {
+            if (this.tileOwnership[row][col] !== settler.ownerId) continue;
+
+            let tooClose = false;
+            for (let ci = 0; ci < cities.length; ci++) {
+                if (Math.abs(cities[ci].row - row) <= 1 && Math.abs(cities[ci].col - col) <= 1) {
+                    tooClose = true;
+                    break;
+                }
+            }
+            if (!tooClose) validTiles.push({ row, col });
+        }
+    }
+
+    return validTiles;
+};
+
 GameEngine.prototype.settlerBuildCity = function(settler) {
     const canBuild = this.canSettlerBuildCity(settler);
     if (!canBuild.valid) {
