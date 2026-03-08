@@ -663,9 +663,9 @@ input:disabled + .toggle-slider {
         position: static;
     }
 
-    body.game-mode #game-footer {
-        position: fixed;
-        bottom: 0;
+    body.game-mode #game-container {
+        max-height: calc(100vh - 8.25rem);
+        max-height: calc(100dvh - 8.25rem);
     }
 
     #game-footer .footer-buttons {
@@ -1006,6 +1006,11 @@ input:disabled + .toggle-slider {
         justify-content: center;
     }
 
+    body.game-mode #game-container {
+        max-height: calc(100vh - 7.9375rem);
+        max-height: calc(100dvh - 7.9375rem);
+    }
+
     #game-footer {
         display: flex;
     }
@@ -1078,6 +1083,11 @@ input:disabled + .toggle-slider {
 
     body.game-mode #game-header {
         justify-content: center;
+    }
+
+    body.game-mode #game-container {
+        max-height: calc(100vh - 8rem);
+        max-height: calc(100dvh - 8rem);
     }
 
     #game-footer {
